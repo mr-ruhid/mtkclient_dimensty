@@ -111,18 +111,10 @@ class DAXML(metaclass=LogBase):
 
     def xread(self) -> Tuple[int,int]:
         while True:
-            hdr = self.usbread()
-            if len(hdr) not in [12, 16]:
-                # retry a few times before giving up — short USB reads can happen transiently
-                for _ in range(5):
-                    extra = self.usbread()
-                    if extra:
-                        hdr += extra
-                    if len(hdr) in [12, 16]:
-                        break
-                if len(hdr) not in [12, 16]:
-                    self.error(f"xread: Wrong length, got {len(hdr)} bytes")
-                    return -1, -1
+            hdr = self.usbread(12)
+            if len(hdr) != 12:
+                self.error(f"xread: Wrong length, got {len(hdr)} bytes")
+                return -1, -1
             magic = int.from_bytes(hdr[:4],'little')
             if magic != 0xFEEEEEEF:
                 self.error("xread: Wrong magic")
@@ -130,7 +122,8 @@ class DAXML(metaclass=LogBase):
             datatype = int.from_bytes(hdr[4:8],'little')
             length = int.from_bytes(hdr[8:0xC],'little')
             if datatype == DataType.DT_MESSAGE:
-                priority = int.from_bytes(hdr[0xC:0x10],'little')
+                prio = self.usbread(4)
+                priority = int.from_bytes(prio,'little') if len(prio) == 4 else 0
                 length -= 4
                 data = self.usbread(length)
                 try:

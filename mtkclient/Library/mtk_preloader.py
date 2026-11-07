@@ -949,7 +949,12 @@ class Preloader(metaclass=LogBase):
             if res == self.Cmd.GET_BL_VER.value:
                 self.usbwrite(self.Cmd.GET_ME_ID.value)  # 0xE1
                 if self.usbread(1) == self.Cmd.GET_ME_ID.value:
-                    length = unpack(">I", self._safe_usbread(4))[0]
+                    try:
+                        length = unpack(">I", self._safe_usbread(4))[0]
+                    except IOError:
+                        self.warning("GET_ME_ID not supported on this device/mode, skipping.")
+                        self.config.is_brom = True
+                        return None
                     self.mtk.config.meid = self.usbread(length)
                     status = unpack("<H", self._safe_usbread(2))[0]
                     if status == 0:

@@ -962,16 +962,20 @@ class Preloader(metaclass=LogBase):
             elif int.from_bytes(res, 'little') > 2:
                 self.usbwrite(self.Cmd.GET_ME_ID.value)
                 if self.usbread(1) == self.Cmd.GET_ME_ID.value:
-                    length = unpack(">I", self._safe_usbread(4))[0]
-                    self.mtk.config.meid = self.usbread(length)
-                    status = unpack("<H", self._safe_usbread(2))[0]
+                    try:
+                        length = unpack(">I", self._safe_usbread(4))[0]
+                        self.mtk.config.meid = self.usbread(length)
+                        status = unpack("<H", self._safe_usbread(2))[0]
+                    except IOError:
+                        self.warning("GET_ME_ID not supported on this device/mode, skipping.")
+                        self.config.is_brom = False
+                        return None
                     self.config.is_brom = False
                     if status == 0:
                         return self.mtk.config.meid
                     else:
                         self.error("Error on get_meid: " + self.eh.status(status))
                 self.config.is_brom = False
-        return None
 
     def get_socid(self):
         if self.usbwrite(self.Cmd.GET_BL_VER.value):

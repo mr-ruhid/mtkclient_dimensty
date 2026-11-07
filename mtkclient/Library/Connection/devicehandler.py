@@ -103,9 +103,21 @@ class DeviceClass(metaclass=LogBase):
 
     def rdword(self, count=1, little=False, direct=False):
         rev = "<" if little else ">"
-        value = self.usbread(4 * count)
-        if value == b'':
-            return None
+        needed = 4 * count
+        value = self.usbread(needed)
+        if value is None:
+            value = b''
+        retries = 0
+        while len(value) < needed and retries < 5:
+            extra = self.usbread(needed - len(value))
+            if extra:
+                value += extra
+            retries += 1
+        if len(value) < needed:
+            if len(value) == 0:
+                return None
+            self.warning(f"rdword: short read, got {len(value)} of {needed} bytes, padding with zeros")
+            value = value + b'\x00' * (needed - len(value))
         if direct:
             return value
         data = unpack(rev + "I" * count, value)
@@ -115,7 +127,19 @@ class DeviceClass(metaclass=LogBase):
 
     def rword(self, count=1, little=False):
         rev = "<" if little else ">"
-        value = self.usbread(2 * count)
+        needed = 2 * count
+        value = self.usbread(needed)
+        if value is None:
+            value = b''
+        retries = 0
+        while len(value) < needed and retries < 5:
+            extra = self.usbread(needed - len(value))
+            if extra:
+                value += extra
+            retries += 1
+        if len(value) < needed:
+            self.warning(f"rword: short read, got {len(value)} of {needed} bytes, padding with zeros")
+            value = value + b'\x00' * (needed - len(value))
         data = unpack(rev + "H" * count, value)
         if count == 1:
             return data[0]

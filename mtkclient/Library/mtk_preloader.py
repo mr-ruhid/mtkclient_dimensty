@@ -249,10 +249,7 @@ class Preloader(metaclass=LogBase):
             self.info("\tSW Ver:\t\t\t" + hex(self.config.swver))
         if not self.config.iot:
             meid = self.get_meid()
-        if meid is not None:
-            self.config.hwparam = HwParam(self.mtk.config, self.config.meid.hex(), self.mtk.config.hwparam_path)
-        else:
-            self.config.hwparam = HwParam(self.mtk.config, "", self.mtk.config.hwparam_path)
+
         if meid is not None:
             self.config.hwparam.writesetting("hwcode", hex(self.config.hwcode))
             self.config.set_meid(meid)
@@ -260,12 +257,12 @@ class Preloader(metaclass=LogBase):
                 self.info("ME_ID:\t\t\t" + hexlify(meid).decode('utf-8').upper())
             if readsocid or self.config.chipconfig.socid_addr or self.config.chipconfig.has64bit:
                 socid = self.get_socid()
-                if len(socid) >= 16:
-                    self.config.set_socid(socid)
-                if self.display:
-                    if socid != b"":
-                        self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
-                        self.config.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
+            if len(socid) >= 16:
+                self.config.set_socid(socid)
+            if self.display:
+                if socid != b"":
+                    self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
+                    self.config.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
 
         if self.config.auth is not None and self.config.is_brom and self.config.target_config["daa"]:
             if os.path.exists(self.config.auth):

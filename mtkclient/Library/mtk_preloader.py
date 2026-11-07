@@ -140,11 +140,6 @@ class Preloader(metaclass=LogBase):
         self.sendcmd = self.mtk.port.mtk_cmd
 
     def _safe_usbread(self, length, retries=5):
-        """
-        Reads `length` bytes from usb, retrying on short/empty reads instead
-        of letting the caller crash on an undersized buffer. Pads with zero
-        bytes as a last resort so struct.unpack never raises struct.error.
-        """
         value = self.usbread(length)
         if value is None:
             value = b''
@@ -155,8 +150,7 @@ class Preloader(metaclass=LogBase):
                 value += extra
             attempt += 1
         if len(value) < length:
-            self.warning(f"_safe_usbread: short read, got {len(value)} of {length} bytes, padding with zeros")
-            value = value + b'\x00' * (length - len(value))
+            raise IOError(f"_safe_usbread: USB short read, got {len(value)} of {length} bytes — port desync")
         return value
 
     def init(self, display=True, directory: str = None):

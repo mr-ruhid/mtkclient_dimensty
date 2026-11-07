@@ -139,6 +139,26 @@ class Preloader(metaclass=LogBase):
         self.echo = self.mtk.port.echo
         self.sendcmd = self.mtk.port.mtk_cmd
 
+    def _safe_usbread(self, length, retries=5):
+        """
+        Reads `length` bytes from usb, retrying on short/empty reads instead
+        of letting the caller crash on an undersized buffer. Pads with zero
+        bytes as a last resort so struct.unpack never raises struct.error.
+        """
+        value = self.usbread(length)
+        if value is None:
+            value = b''
+        attempt = 0
+        while len(value) < length and attempt < retries:
+            extra = self.usbread(length - len(value))
+            if extra:
+                value += extra
+            attempt += 1
+        if len(value) < length:
+            self.warning(f"_safe_usbread: short read, got {len(value)} of {length} bytes, padding with zeros")
+            value = value + b'\x00' * (length - len(value))
+        return value
+
     def init(self, display=True, directory: str = None):
         if directory:
             self.mtk.config.hwparam_path = directory
@@ -382,7 +402,7 @@ class Preloader(metaclass=LogBase):
             if self.echo(pack(">I", addr)):
                 # ack =
                 self.echo(pack(">I", dwords))
-                return unpack(">H", self.usbread(2))[0]
+                return unpack(">H", self._safe_usbread(2))[0]
         return []
 
     def read(self, addr, dwords=1, length=32, direct: bool = False) -> list:
@@ -397,7 +417,7 @@ class Preloader(metaclass=LogBase):
                         result = self.rdword(dwords, direct=direct)
                     else:
                         result = self.rword(dwords)
-                    status2 = unpack(">H", self.usbread(2))[0]
+                    status2 = unpack(">H", self._safe_usbread(2))[0]
                     if status2 <= 0xFF:
                         return result
                 else:
@@ -891,7 +911,7 @@ class Preloader(metaclass=LogBase):
             self.mtk.port.echo(pack(">I", mode))
             self.mtk.port.echo(pack(">I", address))
             self.mtk.port.echo(pack(">I", length))
-            status = self.mtk.port.usbread(2)
+            status = self._safe_usbread(2)
             try:
                 status = unpack("<H", status)[0]
             except Exception:
@@ -911,7 +931,7 @@ class Preloader(metaclass=LogBase):
                 self.mtk.port.usbwrite(data[:length])
 
             if check_status:
-                status = self.mtk.port.usbread(2)
+                status = self._safe_usbread(2)
                 try:
                     status = unpack("<H", status)[0]
                 except Exception:
@@ -935,9 +955,9 @@ class Preloader(metaclass=LogBase):
             if res == self.Cmd.GET_BL_VER.value:
                 self.usbwrite(self.Cmd.GET_ME_ID.value)  # 0xE1
                 if self.usbread(1) == self.Cmd.GET_ME_ID.value:
-                    length = unpack(">I", self.usbread(4))[0]
+                    length = unpack(">I", self._safe_usbread(4))[0]
                     self.mtk.config.meid = self.usbread(length)
-                    status = unpack("<H", self.usbread(2))[0]
+                    status = unpack("<H", self._safe_usbread(2))[0]
                     if status == 0:
                         self.config.is_brom = True
                         return self.mtk.config.meid
@@ -946,9 +966,9 @@ class Preloader(metaclass=LogBase):
             elif int.from_bytes(res, 'little') > 2:
                 self.usbwrite(self.Cmd.GET_ME_ID.value)
                 if self.usbread(1) == self.Cmd.GET_ME_ID.value:
-                    length = unpack(">I", self.usbread(4))[0]
+                    length = unpack(">I", self._safe_usbread(4))[0]
                     self.mtk.config.meid = self.usbread(length)
-                    status = unpack("<H", self.usbread(2))[0]
+                    status = unpack("<H", self._safe_usbread(2))[0]
                     self.config.is_brom = False
                     if status == 0:
                         return self.mtk.config.meid
@@ -963,9 +983,9 @@ class Preloader(metaclass=LogBase):
             if res == self.Cmd.GET_BL_VER.value:
                 self.usbwrite(self.Cmd.GET_SOC_ID.value)  # 0xE7
                 if self.usbread(1) == self.Cmd.GET_SOC_ID.value:
-                    length = unpack(">I", self.usbread(4))[0]
+                    length = unpack(">I", self._safe_usbread(4))[0]
                     self.mtk.config.socid = self.usbread(length)
-                    status = unpack("<H", self.usbread(2))[0]
+                    status = unpack("<H", self._safe_usbread(2))[0]
                     if status == 0:
                         return self.mtk.config.socid
                     else:
@@ -973,9 +993,9 @@ class Preloader(metaclass=LogBase):
             elif int.from_bytes(res, 'little') > 2:
                 self.usbwrite(self.Cmd.GET_SOC_ID.value)
                 if self.usbread(1) == self.Cmd.GET_SOC_ID.value:
-                    length = unpack(">I", self.usbread(4))[0]
+                    length = unpack(">I", self._safe_usbread(4))[0]
                     self.mtk.config.socid = self.usbread(length)
-                    status = unpack("<H", self.usbread(2))[0]
+                    status = unpack("<H", self._safe_usbread(2))[0]
                     self.config.is_brom = False
                     if status == 0:
                         return self.mtk.config.socid

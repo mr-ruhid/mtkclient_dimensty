@@ -138,8 +138,7 @@ class DeviceClass(metaclass=LogBase):
                 value += extra
             retries += 1
         if len(value) < needed:
-            self.warning(f"rword: short read, got {len(value)} of {needed} bytes, padding with zeros")
-            value = value + b'\x00' * (needed - len(value))
+            raise IOError(f"rword: USB short read, got {len(value)} of {needed} bytes — port desync")
         data = unpack(rev + "H" * count, value)
         if count == 1:
             return data[0]

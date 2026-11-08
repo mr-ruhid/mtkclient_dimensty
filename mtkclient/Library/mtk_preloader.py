@@ -251,7 +251,8 @@ class Preloader(metaclass=LogBase):
             meid = self.get_meid()
 
         if meid is not None:
-            self.config.hwparam.writesetting("hwcode", hex(self.config.hwcode))
+            if self.config.hwparam is not None:
+                self.config.hwparam.writesetting("hwcode", hex(self.config.hwcode))
             self.config.set_meid(meid)
             if self.display:
                 self.info("ME_ID:\t\t\t" + hexlify(meid).decode('utf-8').upper())
@@ -262,7 +263,9 @@ class Preloader(metaclass=LogBase):
             if self.display:
                 if socid != b"":
                     self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
-                    self.config.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
+                    if self.config.hwparam is not None:
+                        self.config.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
+
 
         if self.config.auth is not None and self.config.is_brom and self.config.target_config["daa"]:
             if os.path.exists(self.config.auth):

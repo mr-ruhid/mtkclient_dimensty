@@ -149,79 +149,32 @@ class DaHandler(metaclass=LogBase):
             return mtk
         if mtk is None:
             return None
-        if mtk.config.target_config["sbc"] and not mtk.config.is_brom and mtk.config.loader is None:
-            mtk = mtk.bypass_security()
+            
+        mtk.config.target_config["daa"] = False
+        mtk.config.target_config["sbc"] = False
+        mtk.config.target_config["sla"] = False
+        mtk.daloader.patch = True
+        
+        import os
+        loader_path = "preloader_x6871.bin"
+        if os.path.exists(loader_path):
+            print("[+] Infinix Dimensity 8200 DAA Security Bypass tetiklendi!")
+            with open(loader_path, "rb") as f:
+                mtk.config.preloader = f.read()
+
+        if mtk is not None:
             self.mtk = mtk
-            if self.mtk.daloader.patch:
-                self.info("Device was protected. Successfully bypassed security.")
-            else:
-                self.info("Device is still protected, trying to boot to brom")
-                try:
-                    if not mtk.config.loader:
-                        if not mtk.config.is_brom:
-                            self.mtk.preloader.reset_to_brom()
-                except Exception:
-                    pass
-            if mtk is not None:
-                if mtk.config.is_brom and self.mtk.daloader.patch:
-                    self.info("Device is in BROM mode. Trying to dump preloader.")
-                    if mtk.config.preloader is None:
-                        mtk.config.preloader = self.dump_preloader_ram(
-                                                    write_preloader_to_file=self.mtk.config.write_preloader_to_file)
-        else:
-            if mtk.config.target_config["sbc"]:
-                self.info("Device is protected.")
-            else:
-                self.info("Device is unprotected.")
-            if mtk.config.is_brom and not mtk.config.iot:
-                self.info("Device is in BROM-Mode. Bypassing security.")
-                mtk.daloader.patch = False
-                hassecurity = (self.mtk.config.target_config["sla"] or self.mtk.config.target_config["daa"] or
-                               self.mtk.config.target_config["sbc"])
-                bypassedsecurity = False
-                if not hassecurity:
-                    mtk.daloader.patch = True
-                    self.info("Unprotected device, we assume we can patch directly !")
-                else:
-                    if not self.mtk.config.stock and self.mtk.config.ptype != "carbonara":
-                        mtk = mtk.bypass_security()  # Needed for dumping preloader
-                        bypassedsecurity = True
-                    elif self.mtk.config.ptype == "carbonara":
-                        self.info("Using signed DA1 for an explicit Carbonara attempt. Skipping BROM exploitation!")
-                    else:
-                        self.info("Using supplied preloader. Skipping exploitation!")
-
-                if mtk is not None:
-                    self.mtk = mtk
-                    if mtk.config.preloader is None:
-                        if self.mtk.config.chipconfig.damode != 6 and self.mtk.config.is_brom and bypassedsecurity:
-                            self.warning(
-                                "Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
-                            preloader = self.dump_preloader_ram(
-                                        write_preloader_to_file=self.mtk.config.write_preloader_to_file)
-                            if preloader is None:
-                                self.error("Failed to dump preloader from ram, provide a valid one " +
-                                           "via --preloader option")
-                                mtk.daloader.patch = False
-                            else:
-                                mtk.daloader.patch = True
-                                mtk.config.preloader = preloader
-                        else:
-                            self.error("Failed to dump preloader from ram, provide a valid one " +
-                                       "via --preloader option")
-            elif not mtk.config.is_brom:
-                self.info("Device is in Preloader-Mode.")
-                mtk.daloader.patch = False
-            else:
-                self.info("Device is in BROM-Mode - Iot Mode.")
-                mtk.daloader.patch = False
-
+            if mtk.config.preloader is None:
+                print("[*] Preloader yaddasda yoxdur, yukleme kanali aktiv edilir.")
+                
         if not mtk.daloader.upload_da(preloader=mtk.config.preloader):
             self.error("Failed to upload da.")
             sys.exit(1)
         else:
             mtk.daloader.writestate()
+            
         return mtk
+
 
     def patch_vbmeta(self, vbmeta: bytes, vbmode: int):
         vbmeta = bytearray(vbmeta)

@@ -3,18 +3,18 @@ import sys
 from mtkclient.Library.mtk_class import Mtk
 from mtkclient.config.mtk_config import MtkConfig
 from mtkclient.Library.DA.daconfig import DAconfig
-from mtkclient.Library.DA.mtk_daloader import DaLoader
+from mtkclient.Library.DA.mtk_daloader import DAloader
 
 DA_FILE = r"C:\Users\ruhid\Downloads\Infinix-GT-20-Pro-X6871-15\download_agent\DA_BR.bin"  # ORIJINAL fayl, patched YOX
 
 config = MtkConfig(loglevel=logging.INFO)
-config.init_hwcode(0x1172)   # sizin HW code
+config.init_hwcode(0x1172)
 config.hwver = 0xca00
 config.swver = 0
 config.loader = DA_FILE
 
 mtk = Mtk(config=config, loglevel=logging.INFO, serialportname=None)
-daloader = DaLoader(mtk, loglevel=logging.INFO)
+daloader = DAloader(mtk, loglevel=logging.INFO)
 mtk.daloader = daloader
 
 daconfig = DAconfig(mtk=mtk, loader=DA_FILE, preloader=None, loglevel=logging.INFO)

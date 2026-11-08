@@ -161,16 +161,30 @@ class DaHandler(metaclass=LogBase):
             with open(real_loader, "rb") as f:
                 loader_data = f.read()
                 mtk.config.preloader = loader_data
-                if hasattr(mtk, 'daloader') and hasattr(mtk.daloader, 'da'):
-                    mtk.daloader.da.da = loader_data
-                    mtk.daloader.da.da1 = loader_data
+                if hasattr(mtk, 'daloader') and mtk.daloader is not None:
+                    mtk.daloader.patch = True
         except Exception as e:
             print(f"[-] Orijinal loader oxunarken xeta: {e}")
 
         if mtk is not None:
             self.mtk = mtk
                 
-        if not mtk.daloader.upload_da(preloader=mtk.config.preloader):
+        try:
+            status = mtk.daloader.upload_da(preloader=mtk.config.preloader)
+        except Exception:
+            status = False
+
+        if not status:
+            try:
+                print("[*] Alternativ yukleme kanali sınanır...")
+                if hasattr(self, 'da') and self.da is not None:
+                    self.da.da = mtk.config.preloader
+                    self.da.da1 = mtk.config.preloader
+                status = mtk.daloader.upload_da(preloader=mtk.config.preloader)
+            except Exception:
+                pass
+
+        if not status:
             self.error("Failed to upload da.")
             sys.exit(1)
         else:

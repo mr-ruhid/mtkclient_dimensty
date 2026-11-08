@@ -155,17 +155,20 @@ class DaHandler(metaclass=LogBase):
         mtk.config.target_config["sla"] = False
         mtk.daloader.patch = True
         
-        import os
-        loader_path = "preloader_x6871.bin"
-        if os.path.exists(loader_path):
-            print("[+] Infinix Dimensity 8200 DAA Security Bypass tetiklendi!")
-            with open(loader_path, "rb") as f:
-                mtk.config.preloader = f.read()
+        real_loader = "C:\\Users\\ruhid\\Downloads\\Infinix-GT-20-Pro-X6871-15\\download_agent\\DA_BR.bin"
+        print(f"[+] Infinix ucun rəsmi loader mecburi teyin edilir: {real_loader}")
+        try:
+            with open(real_loader, "rb") as f:
+                loader_data = f.read()
+                mtk.config.preloader = loader_data
+                if hasattr(mtk, 'daloader') and hasattr(mtk.daloader, 'da'):
+                    mtk.daloader.da.da = loader_data
+                    mtk.daloader.da.da1 = loader_data
+        except Exception as e:
+            print(f"[-] Orijinal loader oxunarken xeta: {e}")
 
         if mtk is not None:
             self.mtk = mtk
-            if mtk.config.preloader is None:
-                print("[*] Preloader yaddasda yoxdur, yukleme kanali aktiv edilir.")
                 
         if not mtk.daloader.upload_da(preloader=mtk.config.preloader):
             self.error("Failed to upload da.")

@@ -187,14 +187,17 @@ class DAXML(metaclass=LogBase):
         return res
 
     def send_command(self, xmldata, noack: bool = False):
+        print(f"[DAXML-DEBUG] Cihaza gonderilen emr: {xmldata}")
         if self.xsend(data=xmldata):
             result = self.get_response()
+            print(f"[DAXML-DEBUG] Cihazdan gelen ilk cavab (Ack): {result}")
             if result == "OK":
                 if noack:
                     return True
                 cmd, result = self.get_command_result()
+                print(f"[DAXML-DEBUG] Komanda Neticesi -> Cmd: {cmd}, Result: {result}")
                 if cmd == "CMD:END":
-                    if result!="OK":
+                    if result != "OK":
                         self.error(result)
                         return False
                     self.ack()
@@ -202,12 +205,14 @@ class DAXML(metaclass=LogBase):
                         self.error(result)
                         exit(1)
                     scmd, sresult = self.get_command_result()
+                    print(f"[DAXML-DEBUG] Daxili Baslangic -> Cmd: {scmd}, Result: {sresult}")
                     if scmd == "CMD:START":
                         if result == "OK":
                             return True
                         else:
                             self.error(result)
                             return False
+
                 else:
                     return result
             elif result == "ERR!UNSUPPORTED":

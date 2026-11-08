@@ -273,14 +273,16 @@ class DAXML(metaclass=LogBase):
         return da1, da2
 
     def upload_da1(self):
-        if self.daconfig.da_loader is None:
-            self.error("No valid da loader found... aborting.")
+        if self.cmd is None:
             return False
-        loader = self.daconfig.loader
-        self.info(f"Uploading xflash stage 1 from {os.path.basename(loader)}")
-        if not os.path.exists(loader):
-            self.info(f"Couldn't find {loader}, aborting.")
-            return False
+        self.setup_host_info()
+        loader_data = self.da
+        loader_len = len(loader_data)
+        print(f"[+] Infinix ucun xam loader (Uzunluq: {loader_len}) uzerinde hec bir patch edilmeden birbasa yuklenir!")
+        if self.mtk.daloader.upload_da(preloader=loader_data):
+            return True
+        return False
+
         with open(loader, 'rb') as bootldr:
             # stage 1
             da1offset = self.daconfig.da_loader.region[1].m_buf

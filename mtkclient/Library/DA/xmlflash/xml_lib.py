@@ -252,6 +252,9 @@ class DAXML(metaclass=LogBase):
         da2sig_len = self.daconfig.da_loader.region[2].m_sig_len
         hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da1sig_len, da2sig_len,
                                                                          self.daconfig.da_loader.v6)
+        
+        print(f"[DEBUG] hashaddr={hex(hashaddr) if hashaddr else None}, hashmode={hashmode}, hashlen={hashlen}, da1sig_len={hex(da1sig_len)}, da2sig_len={hex(da2sig_len)}")
+
         if hashaddr is not None:
             da1 = self.xmlft.patch_da1(da1)
             pda2 = self.xmlft.patch_da2(da2)

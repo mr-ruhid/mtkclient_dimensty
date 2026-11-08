@@ -588,8 +588,9 @@ class XMLCmd(metaclass=LogBase):
             </arg>
         </da>
         """
+
         if key == "DA.SLA":
-            print("[+] Infinix GT 20/30 Pro üçün Offline DA.SLA Bypass aktiv edildi!")
+            print("[+] Infinix GT 20/30 Pro üçün Offline DA.SLA Bypass tetiklendi!")
             
             offline_policy = (
                 '<?xml version="1.0" encoding="utf-8"?>\n'
@@ -601,13 +602,18 @@ class XMLCmd(metaclass=LogBase):
             ).encode('utf-8')
 
             try:
-                if hasattr(self, 'mtk') and hasattr(self.mtk, 'daloader'):
-                    self.mtk.daloader.write_mem(host_mem_offset, offline_policy)
-                elif hasattr(self, 'write_mem'):
-                    self.write_mem(host_mem_offset, offline_policy)
-                print("[+] Saxta Offline Təhlükəsizlik Siyasəti (SEC-POLICY) RAM-a uğurla yazıldı.")
+
+                if hasattr(self, 'mtk') and hasattr(self.mtk, 'port') and self.mtk.port is not None:
+
+                    self.mtk.port.write(offline_policy)
+                    print("[+] Saxta Offline Siyasəti (SEC-POLICY) USB Portu ilə ötürüldü.")
+                elif hasattr(self, 'mtk') and hasattr(self.mtk, 'daloader') and hasattr(self.mtk.daloader, 'write'):
+                    self.mtk.daloader.write(host_mem_offset, offline_policy)
+                    print("[+] Saxta Offline Siyasəti (SEC-POLICY) daloader.write ilə ötürüldü.")
+                else:
+                    print("[*] Port obyekti tapılmadı, alternativ kanal sınanır...")
             except Exception as e:
-                print(f"[*] RAM-a avtomatik yazıla bilmədi, standart əmrlə davam edilir: {e}")
+                print(f"[-] USB kanalına yazarkən xəta baş verdi: {e}")
 
         content = {
             "arg": [
@@ -616,30 +622,4 @@ class XMLCmd(metaclass=LogBase):
             ]
         }
         cmd = self.create_cmd("GET-SYS-PROPERTY", content)
-        return cmd
-
-    def cmd_set_host_info(self, hostinfo: str = ""):
-        """
-        <?xml version="1.0" encoding="utf-8"?><da><version>1.0</version>
-        <command>CMD:SET-HOST-INFO</command>
-        <arg><info>20230901T234721</info></arg>
-        """
-        if hostinfo == "":
-            current_date_and_time = datetime.datetime.now()
-            hostinfo = current_date_and_time.strftime("%Y%m%dT%H%M%S")
-        content = {
-            "arg": [
-                f"<info>{hostinfo}</info>",
-            ]
-        }
-        cmd = self.create_cmd("SET-HOST-INFO", content)
-        return cmd
-
-    def cmd_get_downloaded_image_feedback(self, mem_offset: int = 0x2000000, mem_length: int = 0x20000):
-        content = {
-            "arg": [
-                f"<target_file>MEM://{hex(mem_offset)}:{hex(mem_length)}</target_file>",
-            ]
-        }
-        cmd = self.create_cmd("GET-DOWNLOADED-IMAGE-FEEDBACK", content)
         return cmd

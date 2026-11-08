@@ -283,48 +283,6 @@ class DAXML(metaclass=LogBase):
             return True
         return False
 
-        with open(loader, 'rb') as bootldr:
-            # stage 1
-            da1offset = self.daconfig.da_loader.region[1].m_buf
-            bootldr.seek(da1offset)
-            # ------------------------------------------------
-            da2offset = self.daconfig.da_loader.region[2].m_buf
-            bootldr.seek(da2offset)
-            da1offset = self.daconfig.da_loader.region[1].m_buf
-            da1size = self.daconfig.da_loader.region[1].m_len
-            da1address = self.daconfig.da_loader.region[1].m_start_addr
-            da1sig_len = self.daconfig.da_loader.region[1].m_sig_len
-            bootldr.seek(da1offset)
-            da1 = bootldr.read(da1size)
-            # ------------------------------------------------
-            da2offset = self.daconfig.da_loader.region[2].m_buf
-            da2sig_len = self.daconfig.da_loader.region[2].m_sig_len
-            bootldr.seek(da2offset)
-            da2 = bootldr.read(self.daconfig.da_loader.region[2].m_len)
-            if self.mtk.daloader.patch or not self.config.target_config["sbc"] and not self.config.stock:
-                da1, da2 = self.patch_da(da1, da2)
-                self.mtk.daloader.patch = True
-                self.daconfig.da2 = da2
-            else:
-                self.mtk.daloader.patch = False
-            self.daconfig.da2 = da2[:-da2sig_len]
-            self.daconfig.da1 = da1
-            if self.mtk.preloader.send_da(da1address, da1size, da1sig_len, da1):
-                self.info("Successfully uploaded stage 1, jumping ..")
-                if self.mtk.preloader.jump_da(da1address):
-                    cmd, result = self.get_command_result()
-                    if cmd == "CMD:START":
-                        self.setup_env()
-                        self.setup_hw_init()
-                        self.setup_host_info()
-                        return True
-                    else:
-                        return False
-                else:
-                    self.error("Error on jumping to DA.")
-            else:
-                self.error("Error on sending DA.")
-        return False
 
     def setup_hw_init(self):
         self.send_command(self.cmd.cmd_host_supported_commands(

@@ -532,7 +532,7 @@ class UsbClass(DeviceClass):
         if resplen <= 0:
             self.info("Warning !")
         res = bytearray()
-        timeout = 0
+        timeout = 10000
         loglevel = self.loglevel
         epr = self.EP_IN.read
         q = self.queue
@@ -566,18 +566,11 @@ class UsbClass(DeviceClass):
                     if rlen > sz:
                         self.warning("Buffer overflow")
                         q.put(buffer[rlen:])
-                        if self.loglevel == logging.DEBUG:
-                            self.warning(traceback.format_exc())
-                            self.warning(f"{rlen} vs {sz}")
-                            self.warning(buffer[sz:].hex())
-                            sys.stdout.flush()
                     extend(buffer[:rlen])
                     if rlen < sz and maxtimeout == -1:
                         break
                 else:
-                    # read full packet
-                    # otherwise, a device packet longer than sz would cause an overflow
-                    dt = epr(w_max_packet_size)
+                    dt = epr(w_max_packet_size, timeout)
                     rlen = len(dt)
                     if rlen > sz:
                         if loglevel == logging.DEBUG:
@@ -586,17 +579,15 @@ class UsbClass(DeviceClass):
                         dt = dt[:sz]
                         rlen = sz
                     extend(dt)
-                    if endearly and rlen!=0:
+                    if endearly and rlen != 0:
                         break
                     if rlen < sz and maxtimeout == -1:
                         break
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
-                    self.debug("Timed out")
                     if timeout == maxtimeout:
                         return b""
-                    timeout += 1
                     pass
                 elif "Overflow" in error:
                     self.error("USB Overflow")
@@ -614,9 +605,10 @@ class UsbClass(DeviceClass):
                 self.verify_data(res[:resplen], "RX:")
         return res[:resplen]
 
+
     def usbxmlread(self, maxtimeout=100):
         res = bytearray()
-        timeout = 0
+        timeout = 10000
         loglevel = self.loglevel
         epr = self.EP_IN.read
         w_max_packet_size = self.EP_IN.wMaxPacketSize
@@ -630,7 +622,7 @@ class UsbClass(DeviceClass):
                     rlen = epr(buffer, timeout)
                     extend(buffer[:rlen])
                 else:
-                    extend(epr(w_max_packet_size))
+                    extend(epr(w_max_packet_size, timeout))
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:

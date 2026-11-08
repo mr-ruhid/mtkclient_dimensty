@@ -598,6 +598,12 @@ class XMLCmd(metaclass=LogBase):
                     else:
                         self.mtk.port.serial.write(offline_policy)
                         print("[+] Saxta Offline Siyasəti .serial.write() ile oturuldu.")
+                    
+                    if hasattr(self.mtk.port, 'usbread'):
+                        self.mtk.port.usbread(0x40)
+                    elif hasattr(self.mtk.port, 'read'):
+                        self.mtk.port.read(0x40)
+                    print("[+] Cihazin cavabi portdan oxundu və kanal aciq saxlanildi.")
             except Exception as e:
                 print(f"[-] USB kanalina yazarken xeta bas verdi: {e}")
 
@@ -608,25 +614,4 @@ class XMLCmd(metaclass=LogBase):
             ]
         }
         cmd = self.create_cmd("GET-SYS-PROPERTY", content)
-        return cmd
-
-    def cmd_set_host_info(self, hostinfo: str = ""):
-        if hostinfo == "":
-            current_date_and_time = datetime.datetime.now()
-            hostinfo = current_date_and_time.strftime("%Y%m%dT%H%M%S")
-        content = {
-            "arg": [
-                f"<info>{hostinfo}</info>",
-            ]
-        }
-        cmd = self.create_cmd("SET-HOST-INFO", content)
-        return cmd
-
-    def cmd_get_downloaded_image_feedback(self, mem_offset: int = 0x2000000, mem_length: int = 0x20000):
-        content = {
-            "arg": [
-                f"<target_file>MEM://{hex(mem_offset)}:{hex(mem_length)}</target_file>",
-            ]
-        }
-        cmd = self.create_cmd("GET-DOWNLOADED-IMAGE-FEEDBACK", content)
         return cmd

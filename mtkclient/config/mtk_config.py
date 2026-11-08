@@ -114,7 +114,8 @@ class MtkConfig(metaclass=LogBase):
 
     def set_meid(self, meid):
         self.meid = meid
-        self.hwparam.writesetting("meid", meid.hex())
+        if self.hwparam is not None:
+            self.hwparam.writesetting("meid", meid.hex())
 
     def get_otp(self):
         if self.otp is None:
@@ -143,7 +144,8 @@ class MtkConfig(metaclass=LogBase):
 
     def set_socid(self, socid):
         self.socid = socid
-        self.hwparam.writesetting("socid", socid.hex())
+        if self.hwparam is not None:
+            self.hwparam.writesetting("socid", socid.hex())
 
     def get_socid(self):
         if self.socid is None:

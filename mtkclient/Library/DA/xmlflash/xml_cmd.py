@@ -588,6 +588,27 @@ class XMLCmd(metaclass=LogBase):
             </arg>
         </da>
         """
+        if key == "DA.SLA":
+            print("[+] Infinix GT 20/30 Pro üçün Offline DA.SLA Bypass aktiv edildi!")
+            
+            offline_policy = (
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                '<da_policy>\n'
+                '    <sla_enabled>False</sla_enabled>\n'
+                '    <daa_enabled>False</daa_enabled>\n'
+                '    <auth_status>DISABLED</auth_status>\n'
+                '</da_policy>\n'
+            ).encode('utf-8')
+
+            try:
+                if hasattr(self, 'mtk') and hasattr(self.mtk, 'daloader'):
+                    self.mtk.daloader.write_mem(host_mem_offset, offline_policy)
+                elif hasattr(self, 'write_mem'):
+                    self.write_mem(host_mem_offset, offline_policy)
+                print("[+] Saxta Offline Təhlükəsizlik Siyasəti (SEC-POLICY) RAM-a uğurla yazıldı.")
+            except Exception as e:
+                print(f"[*] RAM-a avtomatik yazıla bilmədi, standart əmrlə davam edilir: {e}")
+
         content = {
             "arg": [
                 f"<key>{key}</key>",

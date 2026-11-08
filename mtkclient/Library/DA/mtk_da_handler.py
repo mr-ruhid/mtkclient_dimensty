@@ -153,7 +153,7 @@ class DaHandler(metaclass=LogBase):
         mtk.config.target_config["daa"] = False
         mtk.config.target_config["sbc"] = False
         mtk.config.target_config["sla"] = False
-        mtk.daloader.patch = True
+        mtk.daloader.patch = False
         
         real_loader = "C:\\Users\\ruhid\\Downloads\\Infinix-GT-20-Pro-X6871-15\\download_agent\\DA_BR.bin"
         print(f"[+] Infinix ucun rəsmi loader mecburi teyin edilir: {real_loader}")
@@ -162,7 +162,7 @@ class DaHandler(metaclass=LogBase):
                 loader_data = f.read()
                 mtk.config.preloader = loader_data
                 if hasattr(mtk, 'daloader') and mtk.daloader is not None:
-                    mtk.daloader.patch = True
+                    mtk.daloader.patch = False
         except Exception as e:
             print(f"[-] Orijinal loader oxunarken xeta: {e}")
 

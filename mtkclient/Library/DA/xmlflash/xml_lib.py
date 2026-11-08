@@ -672,6 +672,7 @@ class DAXML(metaclass=LogBase):
                                     rsakey = key
                         if rsakey is None:
                             print("No valid sla key found, using dummy auth ....")
+                            print(f"[DEBUG] Transsion in da2: {b'Transsion' in da2}")
                             if b"Transsion" in da2:
                                 # Infinix
                                 sla_signature = bytes.fromhex(

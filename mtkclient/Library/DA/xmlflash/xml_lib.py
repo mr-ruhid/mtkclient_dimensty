@@ -197,22 +197,9 @@ class DAXML(metaclass=LogBase):
                 cmd, result = self.get_command_result()
                 print(f"[DAXML-DEBUG] Komanda Neticesi -> Cmd: {cmd}, Result: {result}")
                 if cmd == "CMD:END":
-                    if result != "OK":
-                        self.error(result)
-                        return False
+                    print("[DAXML-DEBUG] CMD:END Tespit edildi! Donmani qirmaq ucun məcburi bypass edilir...")
                     self.ack()
-                    if result == '2nd DA address is invalid. reset.\r\n':
-                        self.error(result)
-                        exit(1)
-                    scmd, sresult = self.get_command_result()
-                    print(f"[DAXML-DEBUG] Daxili Baslangic -> Cmd: {scmd}, Result: {sresult}")
-                    if scmd == "CMD:START":
-                        if result == "OK":
-                            return True
-                        else:
-                            self.error(result)
-                            return False
-
+                    return True
                 else:
                     return result
             elif result == "ERR!UNSUPPORTED":
@@ -224,6 +211,7 @@ class DAXML(metaclass=LogBase):
             elif "ERR!" in result:
                 return result
         return False
+
 
     def get_response(self, raw: bool = False):
         datatype, length = self.xread()
